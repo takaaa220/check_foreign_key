@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,19 +16,15 @@ func main() {
 	sqlPathStr := flag.String("paths", "", "[required] comma separated file or directory paths")
 	configPath := flag.String("config", "", "[required] config json file path")
 	flag.Parse()
-	if *sqlPathStr == "" {
-		flag.Usage()
-		os.Exit(1)
-	}
-	if *configPath == "" {
+	if *sqlPathStr == "" || *configPath == "" {
 		flag.Usage()
 		os.Exit(1)
 	}
 
-	sqlPaths := strings.Split(*sqlPathStr, ",")
-	reports, err := do(sqlPaths, *configPath)
+	reports, err := do(strings.Split(*sqlPathStr, ","), *configPath)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	for _, report := range reports {
@@ -40,7 +35,7 @@ func main() {
 func do(filePaths []string, configFilePath string) ([]string, error) {
 	tablesBySchema, err := parseConfig(configFilePath)
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("failed to parseConfig: %v", err)
 	}
 
 	sqlFiles := []string{}
@@ -54,7 +49,6 @@ func do(filePaths []string, configFilePath string) ([]string, error) {
 	}
 
 	if len(sqlFiles) == 0 {
-		log.Print("No SQL files found\n")
 		return nil, nil
 	}
 

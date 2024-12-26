@@ -21,9 +21,9 @@ func Test_do(t *testing.T) {
 			filePaths:      []string{"testdata/sql"},
 			configFilePath: "testdata/config.json",
 			want: []string{
-				"Foreign key constraint \"users -> addresses\" in testdata/1_.up.sql is not allowed",
-				"Foreign key constraint \"addresses -> users\" in testdata/1_.up.sql is not allowed",
-				"Foreign key constraint \"abs -> users\" in testdata/2_.up.sql is not allowed",
+				"Foreign key constraint \"users -> addresses\" in testdata/sql/1_.up.sql is not allowed",
+				"Foreign key constraint \"addresses -> users\" in testdata/sql/1_.up.sql is not allowed",
+				"Foreign key constraint \"abs -> users\" in testdata/sql/2_.up.sql is not allowed",
 			},
 			wantErr: false,
 		},
@@ -32,11 +32,11 @@ func Test_do(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			reports, err := do(tt.filePaths, tt.tableWithSchema)
+			reports, err := do(tt.filePaths, tt.configFilePath)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("do() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if diff := cmp.Diff(reports, tt.want, cmpopts.SortSlices(func(i, j string) bool {
+			if diff := cmp.Diff(tt.want, reports, cmpopts.SortSlices(func(i, j string) bool {
 				return i < j
 			})); diff != "" {
 				t.Errorf("do() mismatch (-want +got):\n%s", diff)
