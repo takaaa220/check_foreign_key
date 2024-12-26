@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -11,29 +13,36 @@ import (
 	_ "github.com/pingcap/tidb/parser/test_driver"
 )
 
-var (
-	tablesWithSchema = map[string][]string{
-		"schema1": {"table1", "table2", "users"},
-		"schema2": {"table3", "table4", "addresses"},
-	}
-)
-
 func main() {
-	if len(os.Args) < 2 {
-		log.Fatalf("Usage: %s [file_or_dir_path1] [file_or_dir_path2]...", os.Args[0])
+	sqlPathStr := flag.String("paths", "", "[required] comma separated file or directory paths")
+	configPath := flag.String("config", "", "[required] config json file path")
+	flag.Parse()
+	if *sqlPathStr == "" {
+		flag.Usage()
+		os.Exit(1)
+	}
+	if *configPath == "" {
+		flag.Usage()
+		os.Exit(1)
 	}
 
-	reports, err := do(os.Args[1:], tablesWithSchema)
+	sqlPaths := strings.Split(*sqlPathStr, ",")
+	reports, err := do(sqlPaths, *configPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for _, report := range reports {
-		fmt.Print(report)
+		fmt.Println(report)
 	}
 }
 
-func do(filePaths []string, tablesBySchema map[string][]string) ([]string, error) {
+func do(filePaths []string, configFilePath string) ([]string, error) {
+	tablesBySchema, err := parseConfig(configFilePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	sqlFiles := []string{}
 	for _, filePath := range filePaths {
 		files, err := getSQLFilesRecursively(filePath)
@@ -49,7 +58,7 @@ func do(filePaths []string, tablesBySchema map[string][]string) ([]string, error
 		return nil, nil
 	}
 
-	checker, err := newChecker(tablesWithSchema)
+	checker, err := newChecker(tablesBySchema)
 	if err != nil {
 		return nil, fmt.Errorf("failed to newChecker: %v", err)
 	}
@@ -74,6 +83,20 @@ func do(filePaths []string, tablesBySchema map[string][]string) ([]string, error
 	}
 
 	return reports, nil
+}
+
+func parseConfig(configPath string) (map[string][]string, error) {
+	f, err := os.ReadFile(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read config file: %v", err)
+	}
+
+	var tablesWithSchema map[string][]string
+	if err := json.Unmarshal(f, &tablesWithSchema); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal config file: %v", err)
+	}
+
+	return tablesWithSchema, nil
 }
 
 func getSQLFilesRecursively(filePath string) ([]string, error) {

@@ -12,17 +12,14 @@ func Test_do(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		filePaths       []string
-		tableWithSchema map[string][]string
-		want            []string
-		wantErr         bool
+		filePaths      []string
+		configFilePath string
+		want           []string
+		wantErr        bool
 	}{
 		"testdata1": {
-			filePaths: []string{"testdata"},
-			tableWithSchema: map[string][]string{
-				"schema1": {"table1", "table2", "users"},
-				"schema2": {"table3", "table4", "addresses"},
-			},
+			filePaths:      []string{"testdata/sql"},
+			configFilePath: "testdata/config.json",
 			want: []string{
 				"Foreign key constraint \"users -> addresses\" in testdata/1_.up.sql is not allowed",
 				"Foreign key constraint \"addresses -> users\" in testdata/1_.up.sql is not allowed",
