@@ -18,7 +18,7 @@ go run ./... -paths ./path/to/dir -config ./path/to/config.json
 
 ### Parameters
 
-`-paths`: The directory containing the SQL files to analyze. The script recursively checks all .sql files within this directory.
+`-paths`: The directory containing the SQL files to analyze. The script recursively checks all .sql files within this directory.  
 `-config`: The path to the configuration file defining table groups.
 
 ## Configuration File
